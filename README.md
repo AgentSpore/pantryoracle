@@ -13,7 +13,7 @@ A fast lookup over a curated food-knowledge dataset. The user types a food (e.g.
 ## Proposed Architecture
 
 - **Backend** — FastAPI, layered: `api/` routers, `services/` domain logic (verdict engine, search, symptom matcher), `core/` config + db, `schemas/` Pydantic v2 models, `data/` the curated seed dataset. Storage: aiosqlite, seeded from a JSON/CSV dataset at startup (idempotent upsert). Stdlib + aiosqlite only — no external paid APIs.
-- **Frontend** — a single-page React app (Vite + TypeScript + Tailwind) built to static assets and served by FastAPI as `StaticFiles` at `/`. No SSR, no auth, no backend session.
+- **Frontend** — BUILDLESS (the sandbox has no node/npm — never run a build step). A single `frontend/index.html` plus optional `frontend/app.js` and `frontend/styles.css`. Use Tailwind via the CDN play script `<script src="https://cdn.tailwindcss.com"></script>` with an inline `tailwind.config` for the design tokens, fonts via Google Fonts `<link>`, and plain vanilla JS `fetch()` to the API (no framework, no bundler). FastAPI mounts the `frontend/` dir as `StaticFiles(html=True)` at `/`. No SSR, no auth, no backend session.
 - **Dataset** — ~150–250 common foods seeded from public shelf-life references (USDA/FDA FoodKeeper style). Each row: `name`, `aliases[]`, `category`, `shelf_life` (sealed / opened / fridge / freezer), `rancidity_signs[]`, `cold_safe` (yes/no/depends + note), `toss_rule` (one plain sentence), `sources[]`.
 
 ## Data model (sqlite)
@@ -33,8 +33,8 @@ A fast lookup over a curated food-knowledge dataset. The user types a food (e.g.
 **Design language:** warm, trustworthy, "friendly pantry assistant" — not a clinical database. Calm, confident, zero clutter.
 
 **Design tokens**
-- Color: background `#FBF7F0` (warm paper), surface `#FFFFFF`, ink `#1C1A17`, muted `#6B6259`, brand `#E07A3F` (warm amber), keep-green `#3F9D52`, toss-red `#D2483A`, border `#ECE3D6`.
-- Typography: headings `"Fraunces", serif` (warm, editorial); body `"Inter", system-ui, sans-serif`. Self-host woff2 or use a CDN link. Sizes: hero 40/48, h2 24/32, body 16/26, caption 13/18.
+- Color (put these in the inline `tailwind.config` theme): background `#FBF7F0` (warm paper), surface `#FFFFFF`, ink `#1C1A17`, muted `#6B6259`, brand `#E07A3F` (warm amber), keep-green `#3F9D52`, toss-red `#D2483A`, border `#ECE3D6`.
+- Typography: headings `"Fraunces", serif` (warm, editorial); body `"Inter", system-ui, sans-serif` — both via Google Fonts `<link>`. Sizes: hero 40/48, h2 24/32, body 16/26, caption 13/18.
 - Radius 14px on cards, 10px on inputs/buttons. Soft shadow `0 6px 24px rgba(28,26,23,.08)`. Generous spacing (8-pt scale).
 
 **Screens / states**
@@ -51,6 +51,6 @@ A fast lookup over a curated food-knowledge dataset. The user types a food (e.g.
 
 - `GET /api/v1/foods?q=oil` returns relevant matches; `GET /api/v1/foods/{id}` returns a complete verdict card for at least 150 seeded foods.
 - The symptom endpoint returns a sensible verdict for at least the common rancidity signs (bitter, sour, soapy, paint-like, musty).
-- The frontend is a genuinely polished single page implementing the UX spec above — verdict pills, detail grid, live search, skeleton loading, responsive, accessible — not a raw JSON page or an unstyled form.
-- No account, no external paid API, runs from a single `uvicorn` process serving both API and built frontend. `GET /api/v1/health` returns 200.
+- The frontend is a genuinely polished single page (`frontend/index.html`, buildless, Tailwind CDN + vanilla JS) implementing the UX spec above — verdict pills, detail grid, live search, skeleton loading, responsive, accessible — not a raw JSON page or an unstyled form. FastAPI serves it via `StaticFiles(html=True)` at `/`.
+- No account, no external paid API, no build step, runs from a single `uvicorn` process serving both API and the static frontend. `GET /api/v1/health` returns 200.
 - Clear "guidance only, not medical advice" disclaimer is visible.
