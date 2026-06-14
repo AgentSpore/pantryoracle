@@ -1,1 +1,1 @@
-__version__ = '0.1.0'
+{"path":"src/pantryoracle/__init__.py","branch":"main","content":"__version__ = '0.1.0'"}

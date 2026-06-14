@@ -1,13 +1,1 @@
-from functools import lru_cache
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
-class Settings(BaseSettings):
-    database_url: str = "sqlite+aiosqlite:///./pantryoracle.db"
-    cors_origins: list[str] = ["*"]
-    log_level: str = "INFO"
-
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
-
-@lru_cache
-def get_settings() -> Settings:
-    return Settings()
+{"path":"src/pantryoracle/core/config.py","branch":"main","content":"from functools import lru_cache\nfrom pydantic_settings import BaseSettings, SettingsConfigDict\n\nclass Settings(BaseSettings):\n    database_url: str = \"sqlite+aiosqlite:///./pantryoracle.db\"\n    cors_origins: list[str] = [\"*\"]\n    log_level: str = \"INFO\"\n\n    model_config = SettingsConfigDict(env_file=\".env\", env_file_encoding=\"utf-8\")\n\n@lru_cache\ndef get_settings() -> Settings:\n    return Settings()"}
