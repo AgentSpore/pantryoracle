@@ -5,7 +5,8 @@
     // DOM elements
     const searchInput = document.getElementById('search-input');
     const clearButton = document.getElementById('clear-button');
-    const searchResults = document.getElementById('search-results');
+    const exampleChipsContainer = document.getElementById('example-chips');
+    const searchResultsList = document.getElementById('search-results');
     const verdictCard = document.getElementById('verdict-card');
     const loadingSkeleton = document.getElementById('loading-skeleton');
     const verdictContent = document.getElementById('verdict-content');
@@ -33,6 +34,11 @@
     // State
     let debounceTimeout = null;
     let currentFoodId = null;
+    let highlightedIndex = -1;
+    const exampleChips = [
+        "walnuts", "olive oil", "cooked rice", "almonds", "honey", "bread", "milk", "eggs",
+        "cheese", "yogurt", "chicken", "beef", "fish", "potatoes", "tomatoes", "apples"
+    ];
 
     // Initialize
     function init() {
@@ -49,6 +55,8 @@
         // Initial state: hide verdict card and search results
         hideVerdictCard();
         hideSearchResults();
+        hideExampleChips();
+        renderExampleChips();
     }
 
     // Search handling
@@ -60,9 +68,11 @@
             debounceTimeout = setTimeout(() => {
                 searchFoods(query);
             }, 200);
+            hideExampleChips();
         } else {
             clearButton.style.display = 'none';
             hideSearchResults();
+            showExampleChips();
             hideVerdictCard();
             currentFoodId = null;
         }
@@ -72,8 +82,10 @@
         searchInput.value = '';
         clearButton.style.display = 'none';
         hideSearchResults();
+        hideExampleChips();
         hideVerdictCard();
         currentFoodId = null;
+        highlightedIndex = -1;
         symptomResult.classList.add('hidden');
         symptomInput.value = '';
     }
@@ -90,20 +102,36 @@
         }
     }
 
+    function renderExampleChips() {
+        exampleChipsContainer.innerHTML = '';
+        exampleChips.forEach(chip => {
+            const div = document.createElement('div');
+            div.className = 'px-3 py-1 rounded-full text-xs font-medium bg-surface/50 text-muted hover:bg-surface/200 cursor-pointer';
+            div.textContent = chip;
+            div.addEventListener('click', () => {
+                searchInput.value = chip;
+                handleSearchInput({ target: { value: chip } });
+            });
+            exampleChipsContainer.appendChild(div);
+        });
+    }
+
     function renderSearchResults(foods) {
-        searchResults.innerHTML = '';
+        searchResultsList.innerHTML = '';
+        highlightedIndex = -1;
         if (foods.length === 0) {
             const li = document.createElement('li');
             li.className = 'p-4 text-muted text-center';
             li.textContent = 'We don’t have that one yet';
-            searchResults.appendChild(li);
-            searchResults.classList.remove('hidden');
+            searchResultsList.appendChild(li);
+            searchResultsList.classList.remove('hidden');
             return;
         }
-        foods.forEach(food => {
+        foods.forEach((food, index) => {
             const li = document.createElement('li');
             li.className = 'flex items-center justify-between p-4 cursor-pointer hover:bg-surface/50 transition-colors';
             li.dataset.id = food.id;
+            li.dataset.index = index;
             li.innerHTML = `
                 <div class="flex-1 min-w-0">
                     <div class="text-ink font-medium">${food.name}</div>
@@ -112,21 +140,68 @@
                 <svg class="h-4 w-4 text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             `;
             li.addEventListener('click', () => {
-                searchInput.value = food.name;
-                searchResults.classList.add('hidden');
-                clearButton.style.display = 'block';
-                currentFoodId = food.id;
-                showLoadingSkeleton();
-                fetchFoodById(food.id);
+                selectSearchResult(food.id, food.name);
             });
-            searchResults.appendChild(li);
+            searchResultsList.appendChild(li);
         });
-        searchResults.classList.remove('hidden');
+        searchResultsList.classList.remove('hidden');
     }
 
     function hideSearchResults() {
-        searchResults.classList.add('hidden');
-        searchResults.innerHTML = '';
+        searchResultsList.classList.add('hidden');
+        searchResultsList.innerHTML = '';
+    }
+
+    function showExampleChips() {
+        exampleChipsContainer.classList.remove('hidden');
+    }
+
+    function hideExampleChips() {
+        exampleChipsContainer.classList.add('hidden');
+    }
+
+    function selectSearchResult(id, name) {
+        searchInput.value = name;
+        hideSearchResults();
+        hideExampleChips();
+        currentFoodId = id;
+        showLoadingSkeleton();
+        fetchFoodById(id);
+    }
+
+    // Keyboard navigation for search results
+    function handleKeyDown(e) {
+        if (!searchResultsList.classList.contains('hidden') && searchResultsList.children.length > 0) {
+            const items = searchResultsList.children;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                highlightedIndex = (highlightedIndex + 1) % items.length;
+                updateHighlight();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                highlightedIndex = (highlightedIndex - 1 + items.length) % items.length;
+                updateHighlight();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (highlightedIndex >= 0 && highlightedIndex < items.length) {
+                    const item = items[highlightedIndex];
+                    const id = item.dataset.id;
+                    const name = item.querySelector('.text-ink').textContent;
+                    selectSearchResult(id, name);
+                }
+            }
+        }
+    }
+
+    function updateHighlight() {
+        const items = searchResultsList.children;
+        items.forEach((item, index) => {
+            if (index === highlightedIndex) {
+                item.classList.add('bg-surface/200');
+            } else {
+                item.classList.remove('bg-surface/200');
+            }
+        });
     }
 
     // Verdict card loading
@@ -160,7 +235,7 @@
         }
     }
 
-    function populateVerdict(data) {
+    function populateVertict(data) {
         foodNameEl.textContent = data.name || '';
         renderVerdictPill(data.toss_rule || '');
         shelfSealedEl.textContent = data.shelf_sealed ? `${data.shelf_sealed} days` : '—';
@@ -252,6 +327,10 @@
         }
     }
 
-    // Start
+    // Event listeners for keyboard navigation
+    searchInput.addEventListener('keydown', handleKeyDown);
+    // Click outside to hide chips/results? Not required.
+
+    // Initialize
     init();
 })();
