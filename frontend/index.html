@@ -34,13 +34,8 @@
             }
         }
     </script>
-    <style>
-        /* Ensure we use the configured fonts */
-        body { font-family: font-sans; background-color: background; color: ink; }
-        h1, h2, h3, h4 { font-family: font-serif; }
-    </style>
 </head>
-<body class="min-h-screen flex flex-col items-center p-6">
+<body class="bg-background font-sans text-ink min-h-screen flex flex-col items-center p-6">
     <!-- Header / Hero -->
     <header class="text-center mb-8">
         <h1 class="text-4xl font-serif text-ink mb-2">Is it still good?</h1>
@@ -63,7 +58,11 @@
                     style="display: none;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
-        </ul id="search-results" class="mt-2 border-t border-border bg-surface hidden divide-y divide-border max-h-96 overflow-y-auto"></ul>
+        </div>
+        <!-- Fixed: proper opening tag for ul -->
+        <ul id="search-results" class="mt-2 border-t border-border bg-surface hidden divide-y divide-border max-h-96 overflow-y-auto">
+            <!-- Results will be inserted here as li elements -->
+        </ul>
     </section>
 
     <!-- Verdict Card (hidden by default) -->
